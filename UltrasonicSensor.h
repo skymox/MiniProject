@@ -3,3 +3,4 @@ typedef struct {
   int pinIn;
   long readOut;
 } UltrasonicSensor;
+

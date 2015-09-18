@@ -1,5 +1,7 @@
+#include <math.h>
 #include <Servo.h>
 #include "UltrasonicSensor.h"
+#include "Motor.h"
 
 #define STARTUP_DELAY 100
 #define SENSOR_DELAY 12
@@ -7,6 +9,9 @@
 
 UltrasonicSensor ultrasonic1;
 UltrasonicSensor ultrasonic2;
+
+Motor motorLeft;
+Motor motorRight;
 
 void updateUltrasonicSensor(UltrasonicSensor *sensor) {
   digitalWrite(sensor->pinOut, HIGH);
@@ -19,6 +24,12 @@ void updateUltrasonicSensor(UltrasonicSensor *sensor) {
 Servo steeringServo;
 int steeringPin = 9;
 int steeringPos = 90;
+
+int steeringRatio(long cmLeft, long cmRight) {
+  long delta = cmRight - cmLeft;
+  double deltaPercent = delta / (cmLeft + cmRight);
+  return 90 + (int) round(deltaPercent);
+}
 
 void setup() {
   ultrasonic1.pinOut = 7;
@@ -42,6 +53,17 @@ void setup() {
   digitalWrite(ultrasonic2.pinOut, LOW);
 
   delay(STARTUP_DELAY);
+
+  // Set up motor pins and turn them on
+
+  motorLeft.pinOut = 5;
+  motorRight.pinOut = 6;
+
+  digitalWrite(motorLeft.pinOut, HIGH);
+  digitalWrite(motorRight.pinOut, HIGH);
+
+  motorLeft.on = true;
+  motorRight.on = true;
 }
 
 void loop() {
@@ -50,24 +72,38 @@ void loop() {
   updateUltrasonicSensor(&ultrasonic1);
   updateUltrasonicSensor(&ultrasonic2);
 
+  long cml = ultrasonic1.readOut / CONVERSION_DIVISOR;
+  long cmr = ultrasonic2.readOut / CONVERSION_DIVISOR;
+
   // Print information to console
 
-  long cm = ultrasonic1.readOut / CONVERSION_DIVISOR;
-
   Serial.print("Sensor 1: ");
-  Serial.print(cm);
+  Serial.print(cml);
   Serial.print(" cm");
   Serial.println();
-
-  cm = ultrasonic2.readOut / CONVERSION_DIVISOR;
 
   Serial.print("Sensor 2: ");
-  Serial.print(cm);
+  Serial.print(cmr);
   Serial.print(" cm");
   Serial.println();
+
+  // Update motors
+
+  if(motorLeft.on) {
+    digitalWrite(motorLeft.pinOut, HIGH);
+  } else {
+    digitalWrite(motorLeft.pinOut, LOW);
+  }
+
+  if(motorLeft.on) {
+    digitalWrite(motorRight.pinOut, HIGH);
+  } else {
+    digitalWrite(motorRight.pinOut, LOW);
+  }
 
   // Update steering servo
 
+  steeringPos = steeringRatio(cml, cmr);
   steeringServo.write(steeringPos);
 
   delay(60);
