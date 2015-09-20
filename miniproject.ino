@@ -1,5 +1,4 @@
 #include <math.h>
-#include <Servo.h>
 #include "UltrasonicSensor.h"
 #include "Motor.h"
 
@@ -21,14 +20,12 @@ void updateUltrasonicSensor(UltrasonicSensor *sensor) {
   sensor->readOut = pulseIn(sensor->pinIn, HIGH);
 }
 
-Servo steeringServo;
-int steeringPin = 9;
 int steeringPos = 90;
 
 int steeringRatio(long cmLeft, long cmRight) {
   long delta = cmRight - cmLeft;
-  double deltaPercent = delta / (cmLeft + cmRight);
-  return 90 + (int) round(deltaPercent);
+  double deltaPercent = (double) delta / (double) (cmLeft + cmRight);
+  return (int) round(deltaPercent * 100);
 }
 
 void setup() {
@@ -37,8 +34,6 @@ void setup() {
 
   ultrasonic2.pinOut = 12;
   ultrasonic2.pinIn = 13;
-
-  steeringServo.attach(steeringPin);
 
   Serial.begin(9600);
 
@@ -59,8 +54,8 @@ void setup() {
   motorLeft.pinOut = 5;
   motorRight.pinOut = 6;
 
-  digitalWrite(motorLeft.pinOut, HIGH);
-  digitalWrite(motorRight.pinOut, HIGH);
+  analogWrite(motorLeft.pinOut, (int) round((float) motorLeft.powerLevel / 100.0 * 255.0));
+  analogWrite(motorRight.pinOut, (int) round((float) motorRight.powerLevel / 100.0 * 255.0));
 
   motorLeft.on = true;
   motorRight.on = true;
@@ -72,8 +67,12 @@ void loop() {
   updateUltrasonicSensor(&ultrasonic1);
   updateUltrasonicSensor(&ultrasonic2);
 
+  // Update variables
+
   long cml = ultrasonic1.readOut / CONVERSION_DIVISOR;
   long cmr = ultrasonic2.readOut / CONVERSION_DIVISOR;
+
+  int sr = steeringRatio(cml, cmr);
 
   // Print information to console
 
@@ -87,24 +86,39 @@ void loop() {
   Serial.print(" cm");
   Serial.println();
 
+  Serial.print("Ratio: ");
+  Serial.print(sr);
+
   // Update motors
 
-  if(motorLeft.on) {
-    digitalWrite(motorLeft.pinOut, HIGH);
+  motorLeft.powerLevel = 100;
+  motorRight.powerLevel = 100;
+
+  if(steeringRatio < 0) {
+    motorLeft.powerLevel = 100 + steeringRatio;
+    if(motorLeft.powerLevel < 0) {
+      motorLeft.powerLevel = 0;
+    }
   } else {
-    digitalWrite(motorLeft.pinOut, LOW);
+    motorRight.powerLevel = 100 - steeringRatio;
+    if(motorRight.powerLevel < 0) {
+      motorRight.powerLevel = 0;
+    }
   }
 
   if(motorLeft.on) {
-    digitalWrite(motorRight.pinOut, HIGH);
+    analogWrite(motorLeft.pinOut, (int) round((float) motorLeft.powerLevel / 100.0 * 255.0));
+    analogWrite(motorRight.pinOut, (int) round((float) motorRight.powerLevel / 100.0 * 255.0));
   } else {
-    digitalWrite(motorRight.pinOut, LOW);
+    analogWrite(motorLeft.pinOut, 0);
   }
 
-  // Update steering servo
-
-  steeringPos = steeringRatio(cml, cmr);
-  steeringServo.write(steeringPos);
+  if(motorLeft.on) {
+    analogWrite(motorLeft.pinOut, (int) round((float) motorLeft.powerLevel / 100.0 * 255.0));
+    analogWrite(motorRight.pinOut, (int) round((float) motorRight.powerLevel / 100.0 * 255.0));
+  } else {
+    analogWrite(motorLeft.pinOut, 0);
+  }
 
   delay(60);
 }
