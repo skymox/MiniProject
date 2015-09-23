@@ -76,14 +76,14 @@ void loop() {
 
   // Print information to console
 
-  Serial.print("Sensor 1: ");
-  Serial.print(cml);
-  Serial.print(" cm");
+  Serial.print("Motor 1: ");
+  Serial.print(motorLeft.powerLevel);
+  Serial.print(" %");
   Serial.println();
 
-  Serial.print("Sensor 2: ");
-  Serial.print(cmr);
-  Serial.print(" cm");
+  Serial.print("Motor 2: ");
+  Serial.print(motorRight.powerLevel);
+  Serial.print(" %");
   Serial.println();
 
   Serial.print("Ratio: ");
@@ -94,13 +94,13 @@ void loop() {
   motorLeft.powerLevel = 100;
   motorRight.powerLevel = 100;
 
-  if(steeringRatio < 0) {
-    motorLeft.powerLevel = 100 + steeringRatio;
+  if(sr < 0) {
+    motorLeft.powerLevel = 100 + sr;
     if(motorLeft.powerLevel < 0) {
       motorLeft.powerLevel = 0;
     }
   } else {
-    motorRight.powerLevel = 100 - steeringRatio;
+    motorRight.powerLevel = 100 - sr;
     if(motorRight.powerLevel < 0) {
       motorRight.powerLevel = 0;
     }
