@@ -1,5 +1,5 @@
 typedef struct {
 	int pinOut;
-	int powerLevel = 100;
+	int powerLevel = 0;
 	bool on = false;
 } Motor;
