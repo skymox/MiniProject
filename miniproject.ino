@@ -103,7 +103,7 @@ void loop() {
   sensorRightRunning[1] = sensorRightRunning[0];
   sensorRightRunning[0] = cmr;
 
-  int sr = steeringRatio(averageWithoutOutliers(sensorLeftRunning), averageWithoutOutliers(sensorRightRunning);
+  int sr = steeringRatio(averageWithoutOutliers(sensorLeftRunning), averageWithoutOutliers(sensorRightRunning));
 
   // Update motors
 
